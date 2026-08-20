@@ -44,7 +44,7 @@ jobs:
         image: postgres:18
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: 111
+          POSTGRES_PASSWORD: password
           POSTGRES_DB: mybusiness
         ports:
           - 5433:5432
@@ -59,9 +59,9 @@ jobs:
         working-directory: backend
 
     env:
-      DATABASE_URL: jdbc:postgresql://localhost:5433/mybusiness
+      DB_URL: jdbc:postgresql://localhost:5433/mybusiness
       DB_USERNAME: postgres
-      DB_PASSWORD: 111  
+      DB_PASSWORD: password  
       GEMINI_API_KEY: ci-not-used
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Ho_Chi_Minh
 
