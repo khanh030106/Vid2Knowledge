@@ -120,19 +120,20 @@ Tạo migration Flyway và các bảng tối thiểu:
 
 ### Công việc backend
 
-1. Thay endpoint preview bằng API chính:
+1. Thêm đăng nhập Google trước; email/password chỉ thêm nếu thực sự cần.
+2. Thay endpoint preview bằng API chính:
    - `POST /api/v1/analyses` tạo job;
    - `GET /api/v1/analyses/{id}` lấy trạng thái/kết quả;
    - `GET /api/v1/analyses` lấy lịch sử.
-2. Xử lý bất đồng bộ:
+3. Xử lý bất đồng bộ:
    - tạo job ở trạng thái `queued`;
    - worker/service gọi Gemini và cập nhật `processing`, `completed` hoặc `failed`;
    - frontend polling trạng thái ban đầu; SSE có thể thêm sau.
-3. Cache theo `videoId + outputConfig`:
+4. Cache theo `videoId + outputConfig`:
    - nếu kết quả cache hợp lệ, trả lại kết quả có sẵn;
    - chỉ tái sử dụng khi phù hợp quyền truy cập và không rò rỉ dữ liệu người dùng.
-4. Lưu kết quả JSON đã validate và metadata xử lý.
-5. Thêm observability: correlation ID, thời gian Gemini call, mã lỗi và chỉ số job thành công/thất bại.
+5. Lưu kết quả JSON đã validate và metadata xử lý.
+6. Thêm observability: correlation ID, thời gian Gemini call, mã lỗi và chỉ số job thành công/thất bại.
 
 ### Công việc frontend
 
@@ -162,13 +163,12 @@ Cho phép mở thử nghiệm công khai mà vẫn kiểm soát spam và chi ph�
 
 ### Công việc
 
-1. Thêm đăng nhập Google trước; email/password chỉ thêm nếu thực sự cần.
-2. Áp quota Free: 3 video/tháng/tài khoản.
-3. Kiểm tra quota trước khi tạo job, không phải sau khi gọi Gemini.
-4. Rate limit theo tài khoản và IP cho endpoint tạo job.
-5. Đặt giới hạn thời lượng/loại URL hợp lý nếu kết quả test cho thấy video dài gây chi phí hoặc thất bại cao.
-6. Hiển thị số lượt còn lại và lý do khi từ chối xử lý.
-7. Thêm giới hạn ngân sách/alert cho Gemini và hạ tầng deploy.
+1. Áp quota Free: 3 video/tháng/tài khoản.
+2. Kiểm tra quota trước khi tạo job, không phải sau khi gọi Gemini.
+3. Rate limit theo tài khoản và IP cho endpoint tạo job.
+4. Đặt giới hạn thời lượng/loại URL hợp lý nếu kết quả test cho thấy video dài gây chi phí hoặc thất bại cao.
+5. Hiển thị số lượt còn lại và lý do khi từ chối xử lý.
+6. Thêm giới hạn ngân sách/alert cho Gemini và hạ tầng deploy.
 
 ### Tiêu chí hoàn thành
 
