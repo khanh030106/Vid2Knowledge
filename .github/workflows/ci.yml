@@ -79,7 +79,6 @@ jobs:
       - name: Run backend tests
         run: ./mvnw test
 
-      - name: Show test reports on failure
+      - name: Show backend test failure details
         if: failure()
-        run: |
-          find target/surefire-reports -type f -maxdepth 1 -print -exec cat {} \;
+        run: cat target/surefire-reports/*.txt
