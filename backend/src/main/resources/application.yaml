@@ -2,10 +2,11 @@ spring:
   application:
     name: vid2knowledge-backend
 
-#--------------AI-------------------------------
+#-----------docker-------------------------
 
-  gemini:
-    api-key: ${GEMINI_API_KEY:}
+  docker:
+    compose:
+      enabled: false
 
 #------------DB----------------------------------
 
@@ -22,7 +23,11 @@ spring:
 
     hikari:
       maximum-pool-size: 10
-      minium-idle: 2
+      minimum-idle: 2
       connection-timeout: 3000
 
+#--------------AI-------------------------------
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
 
