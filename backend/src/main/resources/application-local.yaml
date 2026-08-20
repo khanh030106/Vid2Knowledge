@@ -1,0 +1,16 @@
+cors:
+  allowed-origins:
+    - http://localhost:5173
+
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+
+  allowed-headers:
+    - "*"
+
+  allowed-credentials: true

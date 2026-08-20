@@ -1,0 +1,12 @@
+name: mybusiness
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: vid2knowledge-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:?DB_NAME not set}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD not set}
+      POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME not set}
+    ports:
+      - '5433:5432'
