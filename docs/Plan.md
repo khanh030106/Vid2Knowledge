@@ -72,12 +72,14 @@ Chứng minh Gemini hiểu được YouTube URL và có thể trả về learnin
    - timestamp nếu có đủ căn cứ.
 5. Parse và validate JSON trước khi trả về client.
 6. Trả lỗi dễ hiểu cho các trường hợp video private/unavailable, Gemini timeout, quota exceeded hoặc output không hợp lệ.
+7. Ghi log correlation ID, thời gian Gemini call, mã lỗi, model và mức dùng quota/token cho mỗi lần gọi.
 
-### Công việc frontend tối thiểu
+### Kiểm thử API bằng Postman
 
-1. Form dán YouTube URL.
-2. Trạng thái loading và hiển thị lỗi.
-3. Render JSON raw/đơn giản để kiểm tra dữ liệu trước khi đầu tư UI.
+1. Gọi `POST /api/v1/analysis/preview` với các YouTube URL đại diện.
+2. Xác minh URL hợp lệ trả learning package đúng schema.
+3. Xác minh URL không hợp lệ, video private/unavailable, Gemini timeout, quota exceeded và output không hợp lệ trả lỗi chuẩn, dễ hiểu.
+4. Xác minh API key và dữ liệu nhạy cảm không xuất hiện trong response hoặc log.
 
 ### Bộ kiểm thử feasibility
 
@@ -93,9 +95,12 @@ Chuẩn bị 15–20 video công khai gồm:
 
 Ghi nhận cho từng video: thành công/thất bại, thời gian xử lý, lỗi, chất lượng summary, độ đúng flashcard/quiz và mức dùng quota/token.
 
+Gọi lặp một số video đại diện để đánh giá độ ổn định của schema, số lượng flashcard/quiz, timestamp và tỷ lệ lỗi.
+
 ### Tiêu chí hoàn thành
 
 - Ít nhất 80% bộ video test sinh được learning package hợp lệ.
+- Các lần gọi lặp lại vẫn trả về output đúng schema, với đủ flashcard và quiz theo cấu hình prompt.
 - Nội dung đủ hữu ích khi đối chiếu thủ công với video gốc.
 - Có số liệu về thời gian xử lý và mức dùng Gemini để quyết định quota miễn phí.
 
@@ -120,24 +125,25 @@ Tạo migration Flyway và các bảng tối thiểu:
 
 ### Công việc backend
 
-1. Thêm đăng nhập Google trước; email/password chỉ thêm nếu thực sự cần.
-2. Thay endpoint preview bằng API chính:
+1. Tạo migration Flyway và persistence cho các bảng trên.
+2. Thêm đăng nhập Google trước; email/password chỉ thêm nếu thực sự cần.
+3. Thay endpoint preview bằng API chính:
    - `POST /api/v1/analyses` tạo job;
    - `GET /api/v1/analyses/{id}` lấy trạng thái/kết quả;
    - `GET /api/v1/analyses` lấy lịch sử.
-3. Xử lý bất đồng bộ:
+4. Xử lý bất đồng bộ:
    - tạo job ở trạng thái `queued`;
    - worker/service gọi Gemini và cập nhật `processing`, `completed` hoặc `failed`;
    - frontend polling trạng thái ban đầu; SSE có thể thêm sau.
-4. Cache theo `videoId + outputConfig`:
+5. Lưu kết quả JSON đã validate và metadata xử lý.
+6. Cache theo `videoId + outputConfig`:
    - nếu kết quả cache hợp lệ, trả lại kết quả có sẵn;
    - chỉ tái sử dụng khi phù hợp quyền truy cập và không rò rỉ dữ liệu người dùng.
-5. Lưu kết quả JSON đã validate và metadata xử lý.
-6. Thêm observability: correlation ID, thời gian Gemini call, mã lỗi và chỉ số job thành công/thất bại.
+7. Mở rộng observability với chỉ số job thành công/thất bại và thời gian xử lý end-to-end.
 
 ### Công việc frontend
 
-1. Trang nhập URL và hiển thị tiến trình xử lý.
+1. Trang nhập URL, hiển thị tiến trình xử lý, trạng thái loading và lỗi.
 2. Trang kết quả có các khu vực:
    - overview và summary theo section;
    - key takeaways;
@@ -146,6 +152,8 @@ Tạo migration Flyway và các bảng tối thiểu:
    - link mở video gốc tại timestamp (nếu có).
 3. Trang lịch sử và mở lại một learning package.
 4. Responsive cho desktop và mobile browser.
+5. Ghi nhận các sự kiện tạo analysis, job hoàn thành/thất bại, mở kết quả, lật flashcard, làm quiz và copy nội dung.
+6. Thiết lập CI cơ bản: lint/build frontend, test/build backend trước khi deploy.
 
 ### Tiêu chí hoàn thành
 
@@ -155,7 +163,7 @@ Tạo migration Flyway và các bảng tối thiểu:
 
 ---
 
-## 6. Phase 3 — Xác thực, quota và bảo vệ chi phí
+## 6. Phase 3 — Quota và bảo vệ chi phí
 
 ### Mục tiêu
 
@@ -191,8 +199,7 @@ Cho phép mở thử nghiệm công khai mà vẫn kiểm soát spam và chi ph�
 3. Dùng PostgreSQL managed có free tier phù hợp trong giai đoạn đầu.
 4. Lưu secrets bằng nền tảng deploy/secret manager, không commit vào repository.
 5. Cấu hình biến môi trường production, CORS, HTTPS và health check.
-6. Thiết lập CI cơ bản: lint/build frontend, test/build backend trước khi deploy.
-7. Test smoke trên production: login, tạo job, mở kết quả, quota và lịch sử.
+6. Test smoke trên production: login, tạo job, mở kết quả, quota và lịch sử.
 
 ### Tiêu chí hoàn thành
 
@@ -210,7 +217,7 @@ Xác minh người dùng có thực sự học lại và quay lại sản phẩm
 
 ### Công việc
 
-1. Đo các sự kiện: tạo analysis, job hoàn thành/thất bại, mở kết quả, lật flashcard, làm quiz, copy nội dung và quay lại sau 7 ngày.
+1. Phân tích các sự kiện đã ghi nhận: tạo analysis, job hoàn thành/thất bại, mở kết quả, lật flashcard, làm quiz, copy nội dung và quay lại sau 7 ngày.
 2. Thu thập phản hồi ngắn trong app: học liệu có hữu ích không, lỗi nào, họ muốn xuất file hay học lại bằng flashcard.
 3. Theo dõi tỷ lệ thành công, thời gian xử lý, chi phí Gemini/video thành công và tỷ lệ dùng hết quota.
 4. Cải thiện prompt/schema từ các lỗi thực tế; thêm evaluation set khi có mẫu video đại diện.
@@ -233,8 +240,8 @@ Xác minh người dùng có thực sự học lại và quay lại sản phẩm
 ## 9. Thứ tự bắt tay vào code
 
 1. Hoàn tất Phase 0: cấu hình local và bảo mật secrets.
-2. Làm Phase 1 đến khi chạy được từ URL sang JSON learning package.
-3. Chạy bộ test feasibility và ghi kết quả.
-4. Nếu đạt tiêu chí, làm Phase 2: job, database, trang kết quả và lịch sử.
+2. Làm Phase 1: API preview, Postman, bộ test feasibility và đo độ ổn định.
+3. Nếu đạt tiêu chí, làm Phase 2: database, xác thực, job, lịch sử, cache và trang kết quả.
+4. Ghi nhận observability và các sự kiện sản phẩm ngay khi từng phần của Phase 2 được hoàn thành.
 5. Thêm Phase 3 trước khi public link.
-6. Deploy Phase 4 và bắt đầu đo Phase 5.
+6. Deploy Phase 4, sau đó phân tích và cải thiện ở Phase 5.
